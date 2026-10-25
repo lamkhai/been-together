@@ -14,7 +14,7 @@ import * as sync from './sync.js';
 import * as backup from './backup.js';
 import { esc, icon, toast, fmtSize, copyText } from './ui.js';
 
-const VERSION = '1.0.0'; // nhớ tăng cùng VERSION trong sw.js
+const VERSION = '1.1.0'; // nhớ tăng cùng VERSION trong sw.js
 const DAY = 86400000;
 const app = document.getElementById('app');
 const state = {

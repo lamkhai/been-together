@@ -1,5 +1,5 @@
 // Vẽ kỷ niệm ra HTML: thẻ lớn theo bố cục, dòng danh sách, mục "Sắp tới", bảng thông tin.
-import { TYPES, LAYOUTS, COUNT_MODES } from './model.js';
+import { TYPES, LAYOUTS, COUNT_MODES, labelOf } from './model.js';
 import { countInfo, nextYearly, addDays, fmtNum, fmtDate, fmtYmd } from './dates.js';
 import { esc, icon } from './ui.js';
 
@@ -9,27 +9,32 @@ export function imgStyle(s) {
   return `object-position:${pos};transform-origin:${pos};transform:scale(${(+s.zoom || 1).toFixed(3)})`;
 }
 
-/** Chữ hiển thị số ngày của 1 kỷ niệm. */
+/**
+ * Chữ hiển thị số ngày của 1 kỷ niệm.
+ * Dòng chữ trên số ngày (label) do người dùng đặt chỉ dùng ở trạng thái bình thường của cách đếm;
+ * các trạng thái đặc biệt (đúng ngày, đã qua, đếm lên mà ngày ở tương lai) giữ chữ cố định.
+ */
 export function countView(m, today) {
   const c = countInfo(m, today);
   const t = TYPES[m.type];
+  const label = labelOf(m);
   switch (c.kind) {
     case 'since':
       return {
-        label: t.sinceLabel, big: fmtNum(c.value), unit: 'ngày',
+        label, big: fmtNum(c.value), unit: 'ngày',
         sub: c.value === 0 ? 'Hôm nay là ngày đầu tiên' : `${fmtYmd(c.ymd)} · từ ${fmtDate(m.date)}`,
       };
     case 'until':
       return c.today
         ? { label: 'Chính là', big: 'Hôm nay', word: true, unit: '', sub: fmtDate(m.date, true) }
-        : { label: 'Còn', big: fmtNum(c.value), unit: 'ngày', sub: `đến ${fmtDate(m.date, true)}` };
+        : { label: m.countMode === 'until' ? label : 'Còn', big: fmtNum(c.value), unit: 'ngày', sub: `đến ${fmtDate(m.date, true)}` };
     case 'past':
       return { label: 'Đã qua', big: fmtNum(c.value), unit: 'ngày', sub: `kể từ ${fmtDate(m.date)}` };
     default: {
       const nth = c.nth > 0 ? ` lần thứ ${c.nth}` : '';
       return c.today
         ? { label: 'Hôm nay là', big: '🎉', unit: '', sub: `${t.yearlyLabel}${nth}` }
-        : { label: 'Còn', big: fmtNum(c.value), unit: 'ngày', sub: `đến ${t.yearlyLabel.toLowerCase()}${nth} · ${fmtDate(c.next)}` };
+        : { label, big: fmtNum(c.value), unit: 'ngày', sub: `đến ${t.yearlyLabel.toLowerCase()}${nth} · ${fmtDate(c.next)}` };
     }
   }
 }
@@ -143,7 +148,7 @@ export function detailStatsHTML(m, today) {
   const c = countInfo(m, today);
   const rows = [['Ngày', fmtDate(m.date, true)]];
   if (c.kind === 'since') {
-    rows.push([TYPES[m.type].sinceLabel, `${fmtNum(c.value)} ngày`]);
+    rows.push([labelOf(m), `${fmtNum(c.value)} ngày`]);
     if (c.value >= 7) rows.push(['Tức là', `${fmtYmd(c.ymd)} (${fmtNum(Math.floor(c.value / 7))} tuần)`]);
     for (const e of upcomingEvents([m], today, 2)) rows.push([e.left === 0 ? 'Hôm nay' : `Còn ${fmtNum(e.left)} ngày`, `tròn ${e.label} · ${fmtDate(e.date)}`]);
   } else if (c.kind === 'yearly') {

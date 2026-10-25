@@ -4,7 +4,7 @@ App đếm ngày kỷ niệm cho hai người (giống Been Together), chạy tr
 Viết bằng HTML/CSS/JS thuần: không framework, không cần build, không cài thư viện.
 
 - Lưu nhiều kỷ niệm: ngày yêu nhau, ngày cưới, sinh nhật, lần đầu gặp, chuyến đi, tùy chỉnh.
-- Mỗi kỷ niệm có kiểu đếm (đếm lên / đếm ngược / hằng năm), bố cục ảnh (2 người, 1 ảnh, chia đôi, 3 ảnh, chỉ chữ), màu nền, ghi chú.
+- Mỗi kỷ niệm có kiểu đếm (đếm lên / đếm ngược / hằng năm), dòng chữ trên số ngày tự đặt (mặc định "Đã bên nhau", "Đã cưới được"…), bố cục ảnh (2 người, 1 ảnh, chia đôi, 3 ảnh, chỉ chữ), màu nền, ghi chú.
 - Chọn 1 **kỷ niệm chính** hiện lớn ở trang chủ; mục **Sắp tới** nhắc các mốc 100 ngày, tròn năm, sinh nhật.
 - Chạy được khi không có mạng. Dữ liệu luôn nằm đầy đủ trên máy.
 - Đồng bộ giữa 2 máy qua **Google Sheet** của bạn (miễn phí), kèm **sao lưu ra file**.
@@ -81,6 +81,8 @@ App tự đồng bộ khi mở app, khi quay lại app, sau mỗi lần lưu, v�
 ## 6. Cập nhật app
 
 Mỗi lần sửa code: tăng `VERSION` trong **`sw.js`** và **`js/app.js`** rồi đưa lên GitHub. Lần mở app kế tiếp sẽ hiện "Đã có bản cập nhật mới → Tải lại".
+
+Nếu bản cập nhật có sửa **`apps-script/Code.gs`** (ví dụ bản 1.1.0 thêm cột `label`) và bạn **đã cài Apps Script trước đó**: dán lại toàn bộ `Code.gs` → **Lưu** → **Triển khai → Quản lý các lượt triển khai** → bút chì → *Phiên bản:* **Phiên bản mới** → **Triển khai**. Chưa cập nhật thì app vẫn chạy bình thường, chỉ là dòng chữ tự đặt chưa được đồng bộ sang máy kia.
 
 ## 7. Cấu trúc thư mục
 

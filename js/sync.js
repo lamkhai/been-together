@@ -136,7 +136,9 @@ export function planMerge(localList, serverRows) {
   const local = new Map(localList.map((m) => [m.id, m]));
   const best = new Map();
   for (const raw of serverRows || []) {
-    const r = normalize(raw);
+    const l = raw && typeof raw === 'object' ? local.get(String(raw.id || '').trim()) : null;
+    // Ghép lên bản trên máy: cột nào Sheet chưa có (Apps Script bản cũ) thì giữ giá trị trên máy.
+    const r = normalize(l ? { ...l, ...raw } : raw);
     if (!r) continue; // dòng hỏng (vd. sửa tay sai) → coi như cloud thiếu, máy sẽ đẩy lại
     const b = best.get(r.id);
     if (!b || r.updatedAt > b.updatedAt) best.set(r.id, r);

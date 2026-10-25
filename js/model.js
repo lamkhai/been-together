@@ -38,7 +38,7 @@ export function uuid() {
 export function newMemory(type = 'love', date = '') {
   const t = TYPES[type];
   return {
-    id: uuid(), type, title: t.title, date, countMode: t.mode, countFirstDay: false,
+    id: uuid(), type, title: t.title, date, countMode: t.mode, countFirstDay: false, label: '',
     layout: t.layouts[0], slots: [], people: [{ name: '' }, { name: '' }], note: '', theme: t.theme,
     createdAt: 0, updatedAt: 0, updatedBy: '', deleted: false, deletedAt: 0,
   };
@@ -81,6 +81,7 @@ export function normalize(r) {
     date,
     countMode: COUNT_MODES[r.countMode] ? r.countMode : t.mode,
     countFirstDay: bool(r.countFirstDay),
+    label: str(r.label, 40).trim(),
     layout: LAYOUTS[r.layout] ? r.layout : t.layouts[0],
     slots: list(r.slots).slice(0, 3).map((s) => ({
       photo: s && ID_RE.test(String(s.photo)) ? String(s.photo) : null,
@@ -98,6 +99,14 @@ export function normalize(r) {
     deletedAt: num(r.deletedAt),
   };
 }
+
+/** Dòng chữ mặc định phía trên số ngày: đếm lên → theo loại; đếm ngược / hằng năm → "Còn". */
+export function defaultLabel(m) {
+  return m.countMode === 'since' ? (TYPES[m.type] || TYPES.custom).sinceLabel : 'Còn';
+}
+
+/** Dòng chữ phía trên số ngày: chữ người dùng tự đặt, nếu không có thì chữ mặc định. */
+export const labelOf = (m) => (m.label || '').trim() || defaultLabel(m);
 
 /** Bỏ các trường chỉ dùng trên máy (syncedAt). */
 export function stripLocal(m) {

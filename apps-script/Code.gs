@@ -12,8 +12,9 @@
 
 const SHEET_NAME = 'memories';
 const FOLDER_NAME = 'BenNhau-photos';
+// Cột mới luôn thêm vào CUỐI để Sheet đang dùng không bị lệch dữ liệu.
 const COLS = ['id', 'type', 'title', 'date', 'countMode', 'countFirstDay', 'layout', 'slots', 'people',
-  'note', 'theme', 'createdAt', 'updatedAt', 'updatedBy', 'deleted', 'deletedAt'];
+  'note', 'theme', 'createdAt', 'updatedAt', 'updatedBy', 'deleted', 'deletedAt', 'label'];
 const NUM_COLS = ['createdAt', 'updatedAt', 'deletedAt'];
 const BOOL_COLS = ['countFirstDay', 'deleted'];
 const JSON_COLS = ['slots', 'people'];

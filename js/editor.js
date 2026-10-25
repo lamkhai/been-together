@@ -1,5 +1,5 @@
-// Màn tạo / sửa kỷ niệm: loại, tiêu đề, ngày, cách đếm, bố cục, ảnh (kéo / zoom), tên, màu, ghi chú.
-import { TYPES, TYPE_ORDER, LAYOUTS, THEMES, COUNT_MODES, newMemory, normalize } from './model.js';
+// Màn tạo / sửa kỷ niệm: loại, tiêu đề, ngày, cách đếm, dòng chữ trên số ngày, bố cục, ảnh (kéo / zoom), tên, màu, ghi chú.
+import { TYPES, TYPE_ORDER, LAYOUTS, THEMES, COUNT_MODES, newMemory, normalize, defaultLabel } from './model.js';
 import { todayISO } from './dates.js';
 import { cardHTML, imgStyle } from './render.js';
 import * as photos from './photos.js';
@@ -25,7 +25,9 @@ export function mountEditor(root, original, { onSave, onCancel }) {
   draft.people = [0, 1].map((i) => ({ name: (draft.people && draft.people[i] && draft.people[i].name) || '' }));
   // Giữ ảnh của cả 3 ô, để đổi bố cục qua lại không mất ảnh.
   const pool = [0, 1, 2].map((i) => (draft.slots && draft.slots[i] && draft.slots[i].photo ? { ...draft.slots[i] } : null));
-  const touched = { title: !isNew, mode: !isNew, theme: !isNew };
+  draft.label = draft.label || '';
+  // touched: người dùng đã tự sửa → không tự đổi theo loại / cách đếm nữa.
+  const touched = { title: !isNew, mode: !isNew, theme: !isNew, label: !!draft.label };
   const tempIds = new Set();
   let selected = -1;
   let pickSlot = -1;
@@ -50,6 +52,7 @@ export function mountEditor(root, original, { onSave, onCancel }) {
         <div class="seg" id="ed-modes"></div>
         <label class="check" id="ed-first-wrap"><input type="checkbox" id="ed-first"> Tính ngày đầu tiên là ngày 1</label>
       </section>
+      <label class="field"><span class="field-label">Dòng chữ trên số ngày</span><input id="ed-label" maxlength="40" enterkeyhint="done"></label>
       <section class="field"><span class="field-label">Bố cục</span><div class="layouts" id="ed-layouts"></div></section>
       <section class="field">
         <span class="field-label">Ảnh</span>
@@ -71,6 +74,7 @@ export function mountEditor(root, original, { onSave, onCancel }) {
   const $ = (sel) => host.querySelector(sel);
   const preview = $('#ed-preview');
   $('#ed-title').value = draft.title;
+  $('#ed-label').value = draft.label || defaultLabel(draft);
   $('#ed-date').value = draft.date;
   $('#ed-name0').value = draft.people[0].name;
   $('#ed-name1').value = draft.people[1].name;
@@ -122,6 +126,13 @@ export function mountEditor(root, original, { onSave, onCancel }) {
   }
   const select = (i) => { selected = i; renderPreview(); renderTools(); };
 
+  // Chưa tự sửa dòng chữ → ô luôn hiện chữ mặc định của loại + cách đếm hiện tại.
+  function followDefaultLabel() {
+    if (touched.label) return;
+    draft.label = '';
+    $('#ed-label').value = defaultLabel(draft);
+  }
+
   function setType(type) {
     const t = TYPES[type];
     draft.type = type;
@@ -129,6 +140,7 @@ export function mountEditor(root, original, { onSave, onCancel }) {
     if (!touched.mode) draft.countMode = t.mode;
     if (!touched.theme) draft.theme = t.theme;
     if (!t.layouts.includes(draft.layout)) { draft.layout = t.layouts[0]; selected = -1; }
+    followDefaultLabel();
     renderTypes(); renderModes(); renderLayouts(); renderThemes(); renderPreview(); renderTools();
   }
 
@@ -228,6 +240,7 @@ export function mountEditor(root, original, { onSave, onCancel }) {
     if ((el = t.closest('[data-type]'))) return setType(el.dataset.type);
     if ((el = t.closest('[data-mode]'))) {
       draft.countMode = el.dataset.mode; touched.mode = true;
+      followDefaultLabel();
       renderModes(); renderPreview();
       return;
     }
@@ -253,6 +266,7 @@ export function mountEditor(root, original, { onSave, onCancel }) {
   host.addEventListener('input', (e) => {
     const id = e.target.id;
     if (id === 'ed-title') { draft.title = e.target.value; touched.title = true; renderPreview(); }
+    else if (id === 'ed-label') { draft.label = e.target.value; touched.label = true; renderPreview(); }
     else if (id === 'ed-date') { draft.date = e.target.value; renderPreview(); }
     else if (id === 'ed-name0' || id === 'ed-name1') { draft.people[+id.slice(-1)].name = e.target.value; renderPreview(); }
     else if (id === 'ed-note') draft.note = e.target.value;
@@ -261,6 +275,12 @@ export function mountEditor(root, original, { onSave, onCancel }) {
   host.addEventListener('change', (e) => {
     if (e.target.id === 'ed-first') { draft.countFirstDay = e.target.checked; renderPreview(); }
     else if (e.target.id === 'ed-file') handleFile(e.target.files && e.target.files[0]);
+    else if (e.target.id === 'ed-label' && !e.target.value.trim()) {
+      // Xóa trống ô → quay về chữ mặc định.
+      touched.label = false;
+      followDefaultLabel();
+      renderPreview();
+    }
   });
 
   function dropUnused(keep) {
@@ -291,8 +311,10 @@ export function mountEditor(root, original, { onSave, onCancel }) {
     if (saving) return;
     if (!draft.date) { toast('Hãy chọn ngày'); $('#ed-date').focus(); return; }
     const n = LAYOUTS[draft.layout].slots;
+    const label = (draft.label || '').trim();
     const m = normalize({
       ...draft,
+      label: label === defaultLabel(draft) ? '' : label, // trùng mặc định → lưu rỗng để vẫn tự theo loại / cách đếm
       note: (draft.note || '').trim(),
       people: draft.people.map((p) => ({ name: p.name.trim() })),
       slots: pool.slice(0, n).map((s) => s || { photo: null, x: 0, y: 0, zoom: 1 }),

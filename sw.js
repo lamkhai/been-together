@@ -1,6 +1,6 @@
 // Service worker: lưu sẵn các file của app để mở được khi không có mạng.
 // MỖI LẦN SỬA CODE: tăng VERSION (và VERSION trong js/app.js) để điện thoại tải bản mới.
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 const CACHE = 'ben-nhau-' + VERSION;
 const FILES = [
   './', './index.html', './app.css', './manifest.webmanifest',
